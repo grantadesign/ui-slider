@@ -40,6 +40,23 @@ angular.module('ui.slider', []).value('uiSliderConfig',{}).directive('uiSlider',
                             options[property] = parseNumber(attrs[property], useDecimals);
                         }
                     });
+                    
+                    // ensure scope is applied/digested after events are being handled
+                    var eventHandlersToWrap = ['change', 'slide', 'start', 'stop'];
+                    eventHandlersToWrap.forEach(function(eventName) {
+                        var original = options && options[eventName];
+
+                        if (original) {
+                            options[eventName] = function() {
+                                original.apply(options, arguments);
+                                
+                                // Note: this could be throttled if it's needed
+                                if (!scope.$root.$$phase) {
+                                    scope.$apply();
+                                }
+                            }
+                        }
+                    });                    
 
                     elm.slider(options);
                     init = angular.noop;
